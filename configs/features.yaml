@@ -1,0 +1,41 @@
+features_to_use:
+  # Target
+  - has_malnutrition
+  
+  # Demographics
+  - age
+  - gender
+  - race
+  - marital_status
+
+  # Anthropometric
+  - height_cm
+  - weight_kg
+  - bmi
+
+  # Labs
+  - glucose_admit
+  - hematocrit_admit
+  - hemoglobin_admit
+  - potassium_admit
+
+  # Vitals
+  - systolic
+  - diastolic
+
+  # Admission info
+  - admission_type
+  - admission_location
+
+  # Missingness indicators
+  - alk_phos_ordered
+  - ast_ordered
+
+cols_to_drop:
+  - "hadm_id:1"
+  - asparate_aminotransferase_admit
+  - glucose_whole_blood_admit
+  - potassium_whole_blood_admit
+  - albumin_admit
+  - "subject_id:1"
+
