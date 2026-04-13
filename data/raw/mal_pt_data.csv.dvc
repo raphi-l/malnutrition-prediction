@@ -1,0 +1,5 @@
+outs:
+- md5: 562ae50706dec9d3934ff44bd0e9449d
+  size: 203876
+  hash: md5
+  path: mal_pt_data.csv
