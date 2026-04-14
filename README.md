@@ -54,12 +54,17 @@ malnutrition-prediction/
 | Vitals | Systolic/diastolic BP |
 | Labs | Hematocrit, albumin, alkaline phosphatase, AST |
 | Admission | Admission type, location |
-s
 ---
 
 ## 🤖 Model
 
-_Add details about the final model choice, hyperparameters, and rationale here._
+LightGBM was selected for its strong performance on tabular clinical data, where tree-based ensemble methods consistently outperform deep learning
+approaches at this scale. Its native support for categorical features and built-in handling of missing values reduces preprocessing overhead. Probability outputs from the
+classifier allows us to explore different thresholds for identifying malnutrition risk. While lower-thresholds allow up to maximize recall, we will be able to deploy real-time adjustments to reflect
+the realities of patient census and nutrition-department staffing levels.
+
+Tree-based models also provide feature importance scores add a layer of interpretability, surfacing the strongest predictors of malnutrition risk
+and supporting clinical validation of the model's behaviour.
 
 **Algorithm:** LightGBM  
 **Tracking:** MLflow  
@@ -69,7 +74,7 @@ _Add details about the final model choice, hyperparameters, and rationale here._
 
 ## 📈 Results
 
-_Add final model performance metrics here._
+Current model version: 0_1
 
 | Metric | Value |
 |---|---|
@@ -79,14 +84,14 @@ _Add final model performance metrics here._
 | F1 Score | 0.67 |
 | ROC-AUC | 0.86 |
 
+For simplicity, we maintained the default probability treshold of 0.5 for this exploratory model. With a recall of 71% we are able to identify a sizeable portion patients who were diagnosed with malnutrition at some point in their admit. At this point, it is unclear whether are precision score is indicative of true false-postives (i.e. patients who would have met clincal critria for malnutrition, but was discharaged before formal assessment/diagnosis). We will be able to address this once our model is deployed. 
 
 ---
 
 ## ⚠️ Limitations
 
 Our project is currently in the 'proof of concept phase'. 
-Original models were trained on the MIMIC-IV-demo 
-> dataset with additional entries synthesized.
+Original models were trained on the MIMIC-IV-demo dataset with additional entires synthesized. 
 
 For continuous features, each variable was sampled from a normal distribution
 $\mathcal{N}(\mu, \sigma^2)$ where $\mu$ and $\sigma$ were estimated directly
@@ -96,11 +101,15 @@ parameterized by the observed class proportions, and feature-level missingness
 was reintroduced stochastically via Bernoulli sampling to match the sparsity
 patterns of the real data.
 
+As our current model is based on retrospective data, it does not yet address patients who "fall through the cracks", the ultimate target of this model.
+
 ---
 
 ## 🔭 Future Work
 
-We are currently pending approve for the full MIMIC-IV dataset (~400,000 patient admit entries) and will retrain/tune our models at that point. 
+We are currently pending approve for the full MIMIC-IV dataset (~400,000 patient admit entries) and will retrain/tune our models at that point. This will allow us to fine-tube hyperparameters and our detection treshold. 
+
+Once deployed, we will also be able to compare the strength of this tool again existing hospital policy and procedures. Specifically, we will work to identify patients who were correctly identified by our model but would have been missed by extant hospital workflow. 
 
 ---
 
