@@ -84,8 +84,17 @@ _Add final model performance metrics here._
 
 ## ⚠️ Limitations
 
-Our project is currently in the 'proof of concept phase'. Original models were trained on the MIMIC-IV-demo dataset with additional entires synthesized. For continuous features, each variable was sampled from a normal distribution N(μ,σ2)\mathcal{N}(\mu, \sigma^2)
-N(μ,σ2) where μ and σ were estimated directly from the 17 real malnutrition cases, then clipped to physiologically plausible bounds. Categorical variables were drawn from a multinomial distribution parameterized by the observed class proportions, and feature-level missingness was reintroduced stochastically via Bernoulli sampling to match the sparsity patterns of the real data.
+Our project is currently in the 'proof of concept phase'. 
+Original models were trained on the MIMIC-IV-demo 
+> dataset with additional entries synthesized.
+
+For continuous features, each variable was sampled from a normal distribution
+$\mathcal{N}(\mu, \sigma^2)$ where $\mu$ and $\sigma$ were estimated directly
+from the 17 real malnutrition cases, then clipped to physiologically plausible
+bounds. Categorical variables were drawn from a multinomial distribution
+parameterized by the observed class proportions, and feature-level missingness
+was reintroduced stochastically via Bernoulli sampling to match the sparsity
+patterns of the real data.
 
 ---
 
