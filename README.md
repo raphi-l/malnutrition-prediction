@@ -49,11 +49,12 @@ malnutrition-prediction/
 
 | Category | Features |
 |---|---|
-| Demographics | Age, gender, race, marital status |
-| Anthropometrics | Height, weight, BMI |
-| Vitals | Systolic/diastolic BP |
-| Labs | Hematocrit, albumin, alkaline phosphatase, AST |
-| Admission | Admission type, location |
+| Demographics | age, gender, race, marital_status |
+| Anthropometric | height_cm, weight_kg, bmi |
+| Labs | glucose_admit, hematocrit_admit, hemoglobin_admit, potassium_admit |
+| Vitals | systolic, diastolic |
+| Admission Info | admission_type, admission_location |
+| Missingness Indicators | alk_phos_ordered, ast_ordered |
 ---
 
 ## 🤖 Model
