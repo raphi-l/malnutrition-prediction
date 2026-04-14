@@ -17,7 +17,7 @@ Data were obtained from the [MIMIC-IV dataset](https://physionet.org/content/mim
 ---
 
 ## 🗂️ Project Structure
-
+```
 malnutrition-prediction/
 ├── .dvc/                          
 ├── .github/
@@ -42,6 +42,7 @@ malnutrition-prediction/
 ├── mlflow.db
 ├── README.md
 └── requirements.txt
+```
 ---
 
 ## 📊 Explored Features
