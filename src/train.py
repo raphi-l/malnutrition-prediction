@@ -101,10 +101,12 @@ def train_model(df, config=None):
 if __name__ == "__main__":
     
     try:
-        data_path = sys.argv[1] if len(sys.argv) > 1 else "data/processed/test_mini.csv"
-
-    else: data_path = 'https://raw.githubusercontent.com/raphi-l/my-portfolio/refs/heads/main/datasets/mal_nut_train_sample.csv'
-
+        data_path = sys.argv[1] if len(sys.argv) > 1 else "data/processed/train.csv"
+        if not os.path.exists(data_path):
+            raise FileNotFoundError
+    except (IndexError, FileNotFoundError):
+        data_path = 'https://raw.githubusercontent.com/raphi-l/my-portfolio/refs/heads/main/datasets/mal_nut_train_sample.csv'
+    
     df = load_data(data_path)  
     metrics = train_model(df)
 
