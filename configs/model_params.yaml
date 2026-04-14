@@ -1,4 +1,8 @@
-lightgbm:
+model_quality:
+  min_accuracy: 0.35
+  min_f1: 0.50
+
+'lgb.LGBMClassifier':
   target: has_malnutrition
   test_size: 0.2
   random_state: 42

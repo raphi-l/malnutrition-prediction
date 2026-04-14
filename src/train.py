@@ -13,7 +13,6 @@ from sklearn.metrics import classification_report, roc_auc_score
 
 import lightgbm as lgb
 
-# Add src to path so we can import preprocessing
 sys.path.insert(0, os.path.dirname(__file__))
 
 def load_data(path):
@@ -28,7 +27,8 @@ def train_model(df, config=None):
     with open("configs/model_params.yaml") as f:
         model_config = yaml.safe_load(f)
 
-    lightgbm_params = model_config["lightgbm"]
+    lightgbm_params = model_config["lgb.LGBMClassifier"]
+    quality_config = model_config["model_quality"]
 
     X = df.drop('has_malnutrition', axis=1)
     y = df['has_malnutrition']
@@ -66,11 +66,56 @@ def train_model(df, config=None):
     print(classification_report(y_test, y_pred))
     print(f"ROC-AUC: {roc_auc_score(y_test, y_pred_proba):.3f}")
 
+    report = classification_report(y_test, y_pred, output_dict=True)
+   
+    metrics = {
+        "accuracy":  round(report["accuracy"], 4),
+        "precision": round(report["1"]["precision"], 4),  # for the positive class
+        "recall":    round(report["1"]["recall"], 4),
+        "f1_score":  round(report["1"]["f1-score"], 4),
+        "roc_auc":   round(roc_auc_score(y_test, y_pred_proba), 4),
+    }
+
+    # Check thresholds
+    if metrics["accuracy"] < quality_config["min_accuracy"]:
+        print(f"\nWARNING: Accuracy {metrics['accuracy']} is below threshold {quality_config['min_accuracy']}")
+    if metrics["f1_score"] <= quality_config["min_f1"]:
+        print(f"\nWARNING: F1 {metrics['f1_score']} is at/below threshold {quality_config['min_f1']}")
+
+    # Save model
+    os.makedirs("models", exist_ok=True)
+    model_path = "models/model.pkl"
+    with open(model_path, "wb") as f:
+        pickle.dump(model, f)
+    print(f"\nModel saved to {model_path}")
+
+    # Save metrics
+    os.makedirs("metrics", exist_ok=True)
+    metrics_path = "metrics/results.json"
+    with open(metrics_path, "w") as f:
+        json.dump(metrics, f, indent=2)
+    print(f"Metrics saved to {metrics_path}")
+
+    return metrics
+
 if __name__ == "__main__":
     data_path = sys.argv[1] if len(sys.argv) > 1 else "data/processed/test_mini.csv"
 
-    df = load_data(data_path)  # Adjust path as needed
-    train_model(df)
+    df = load_data(data_path)  
+    metrics = train_model(df)
 
+    with open("configs/model_params.yaml") as f:
+        model_config = yaml.safe_load(f)
 
+    quality_config = model_config["model_quality"]
+
+    # Exit with error if thresholds not met
+    if metrics["accuracy"] < quality_config["min_accuracy"]:
+        print(f"\nFAILED: Accuracy below threshold")
+        sys.exit(1)
+    if metrics["f1_score"] < quality_config["min_f1"]:
+        print(f"\nFAILED: F1 score below threshold")
+        sys.exit(1)
+
+    print("\nAll thresholds passed!")
 

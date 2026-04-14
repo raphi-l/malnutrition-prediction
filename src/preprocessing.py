@@ -29,6 +29,7 @@ def clean_data(df, cols_to_drop):
     df = df.drop(['blood_pressure','weight_lb','height_in'], axis=1, errors='ignore')
 
     # df = df.drop('c_reactive_protein_admit',axis=1, errors='ignore')
+    
     df['alk_phos_ordered'] = (df["alkaline_phosphatase_admit"].notnull()).astype(int)
     df['ast_ordered'] = (df["asparate_aminotransferase_ast_admit"].notnull()).astype(int)
 
