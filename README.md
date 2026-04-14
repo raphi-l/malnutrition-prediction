@@ -18,8 +18,30 @@ Data were obtained from the [MIMIC-IV dataset](https://physionet.org/content/mim
 
 ## 🗂️ Project Structure
 
-malnutrition-prediction/ ├── .dvc/ # DVC configuration directory ├── .dvcignore # DVC ignore file ├── .github/ │ └── workflows/ │ └── ml-pipeline.yml # CI/CD workflow for ML pipeline ├── .gitignore ├── configs/ │ ├── features.yaml # Feature configuration │ └── model_params.yaml # Model parameters configuration ├── data/ # Data directory (tracked with DVC) ├── metrics/ # Metrics directory ├── models/ # Trained models directory ├── mlruns/ # MLflow experiment runs ├── mlflow.db # MLflow database ├── notebooks/ │ └── malnutrition_prediction.ipynb # Jupyter notebook for exploration ├── README.md ├── requirements.txt # Python dependencies ├── src/ │ ├── experiment.py # Experiment management │ ├── monitor_drift.py # Data drift monitoring │ ├── preprocessing.py # Data preprocessing utilities │ └── train.py # Model training script └── tests/ └── test_preprocessing.py # Unit tests for preprocessing
-
+malnutrition-prediction/
+├── .dvc/                          
+├── .github/
+│   └── workflows/
+│       └── ml-pipeline.yml        
+├── configs/
+│   ├── features.yaml              
+│   └── model_params.yaml          
+├── data/                          
+├── metrics/                       
+├── models/                        
+├── mlruns/                        
+├── notebooks/
+├── src/
+│   ├── experiment.py              
+│   ├── monitor_drift.py           
+│   ├── preprocessing.py           
+│   └── train.py                   
+├── tests/
+│   └── test_preprocessing.py
+├── .gitignore
+├── mlflow.db
+├── README.md
+└── requirements.txt
 ---
 
 ## 📊 Explored Features
