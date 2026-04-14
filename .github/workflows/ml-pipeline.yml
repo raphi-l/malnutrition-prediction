@@ -68,7 +68,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Train model
-        run: python src/train.py data/processed/train.csv.dvc
+        run: python src/train.py data/processed/train.csv
 
       - name: Upload metrics as artifact
         if: always()
