@@ -17,7 +17,7 @@ Data were obtained from the [MIMIC-IV dataset](https://physionet.org/content/mim
 ## 🗂️ Project Structure
 ---
 
-## 📊 Features
+## 📊 Explored Features
 
 | Category | Features |
 |---|---|
@@ -26,7 +26,7 @@ Data were obtained from the [MIMIC-IV dataset](https://physionet.org/content/mim
 | Vitals | Systolic/diastolic BP |
 | Labs | Hematocrit, albumin, alkaline phosphatase, AST |
 | Admission | Admission type, location |
-
+s
 ---
 
 ## 🤖 Model
