@@ -79,11 +79,11 @@ Current model version: 0_1
 
 | Metric | Value |
 |---|---|
-| Accuracy | 0.91 |
-| Precision |0.62 |
-| Recall | 0.71 |
-| F1 Score | 0.67 |
-| ROC-AUC | 0.86 |
+| Accuracy | 0.97 |
+| Precision |1.00 |
+| Recall | 0.74 |
+| F1 Score | 0.85 |
+| ROC-AUC | 0.975 |
 
 For simplicity, we maintained the default probability treshold of 0.5 for this exploratory model. With a recall of 71% we are able to identify a sizeable portion patients who were diagnosed with malnutrition at some point in their admit. At this point, it is unclear whether are precision score is indicative of true false-postives (i.e. patients who would have met clincal critria for malnutrition, but was discharaged before formal assessment/diagnosis). We will be able to address this once our model is deployed. 
 
