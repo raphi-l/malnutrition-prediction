@@ -32,10 +32,10 @@ if __name__ == "__main__":
             "Check that the experiment has completed MLflow runs."
         )
 
-    # Sort by recall descending (prioritizing disease detection)
-    runs = runs.sort_values('metrics.recall', ascending=False)
+    # Sort by F1 score descending (balancing precision and recall)
+    runs = runs.sort_values('metrics.f1_score', ascending=False)
 
-    print("Top 5 Runs by Recall Score:")
+    print("Top 5 Runs by F1 Score:")
     print("=" * 80)
     for i, row in runs.head(5).iterrows():
         print(f"\nRun: {row['run_id'][:8]}...")
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     best_run = runs.iloc[0]
     print(f"\n{'=' * 80}")
-    print("BEST MODEL (by Recall)")
+    print("BEST MODEL (by F1)")
     print(f"{'=' * 80}")
     print(f"Run ID:     {best_run['run_id']}")
     recall = best_run.get('metrics.recall', 'N/A')
