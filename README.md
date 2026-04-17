@@ -10,7 +10,7 @@ When patients are admitted to hospital, completing a comprehensive nutrition ass
 
 This project develops a **supplemental screening tool** to flag patients at high risk of protein-calorie malnutrition at the point of admission — before a formal nutrition assessment can be completed. Earlier identification allows Registered Dietitians to be involved sooner, potentially reducing missed diagnoses, enabling earlier nutrition interventions, and also improving billing outcomes.
 
-Data were obtained from the [MIMIC-IV dataset](https://physionet.org/content/mimiciv/), extracted via PostgreSQL queries *(link to SQL query text)*.
+Data were obtained from the [MIMIC-IV dataset](https://physionet.org/content/mimiciv/), extracted via SQL queries *([link to SQL query text](https://github.com/raphi-l/malnutrition-prediction/tree/main/sql))*.
 
 
 
@@ -86,6 +86,19 @@ Current model version: 0_1
 | ROC-AUC | 0.86 |
 
 For simplicity, we maintained the default probability treshold of 0.5 for this exploratory model. With a recall of 71% we are able to identify a sizeable portion patients who were diagnosed with malnutrition at some point in their admit. At this point, it is unclear whether are precision score is indicative of true false-postives (i.e. patients who would have met clincal critria for malnutrition, but was discharaged before formal assessment/diagnosis). We will be able to address this once our model is deployed. 
+
+### Drift
+
+In simulated drift dataset-level drift was detected, with 9 out of 18 features (50%) showing statistically significant distributional changes between the reference and current data.
+
+Key features exhibiting drift included `potassium_admit`, `hemoglobin_admit`, `hematocrit_admit`, and `bmi`
+
+Drift in lab values (hemoglobin, hematocrit, potassium) presents a realistic shift in global patient acuity (i.e. the COVID 19 pandemic), which can degrade model calibration.
+Drift in BMI can indicate population-level changes (i.e. if the hospital took on a new bariatric surgery program). 
+
+Overall, these shifts can lead to, reduced predictive accuracy, poor probability calibration, and increased false negatives/positives, especially for minority class predictions. 
+
+First steps would be to retrain the model and reassess performance against the recent data. However, if there are known influencers (such as a bariatric program) we may look to expand our features (i.e. adding `BARI_ELECTIVE` admit to the `admission_type` feature). 
 
 ---
 
