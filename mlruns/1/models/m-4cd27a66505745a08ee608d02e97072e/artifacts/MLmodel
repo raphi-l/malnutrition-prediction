@@ -1,0 +1,41 @@
+artifact_path: /Users/raphaellu/malnutrition-prediction/mlruns/1/models/m-4cd27a66505745a08ee608d02e97072e/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.7
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.5.1
+    skops_trusted_types: null
+is_signature_from_type_hint: false
+mlflow_version: 3.10.1
+model_id: m-4cd27a66505745a08ee608d02e97072e
+model_size_bytes: 242021
+model_uuid: m-4cd27a66505745a08ee608d02e97072e
+prompts: null
+run_id: 36f9449e626548e0b9cee9f3eae7a89b
+signature:
+  inputs: '[{"type": "long", "name": "age", "required": true}, {"type": "string",
+    "name": "gender", "required": true}, {"type": "string", "name": "marital_status",
+    "required": true}, {"type": "double", "name": "height_cm", "required": true},
+    {"type": "double", "name": "weight_kg", "required": true}, {"type": "double",
+    "name": "bmi", "required": true}, {"type": "double", "name": "glucose_admit",
+    "required": false}, {"type": "double", "name": "hematocrit_admit", "required":
+    false}, {"type": "double", "name": "hemoglobin_admit", "required": false}, {"type":
+    "double", "name": "potassium_admit", "required": false}, {"type": "double", "name":
+    "systolic", "required": false}, {"type": "double", "name": "diastolic", "required":
+    false}, {"type": "long", "name": "alk_phos_ordered", "required": true}, {"type":
+    "long", "name": "ast_ordered", "required": true}, {"type": "string", "name": "race_grouped",
+    "required": true}, {"type": "string", "name": "admit_type_grouped", "required":
+    true}, {"type": "string", "name": "admit_loc_grouped", "required": true}]'
+  outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "int64", "shape": [-1]}}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2026-04-17 03:14:38.678724'
