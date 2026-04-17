@@ -22,13 +22,13 @@ target: has_malnutrition
 
 split:
   type: stratified_kfold
-  n_splits: 5
+  n_splits: 3
   shuffle: true
   random_state: 42
 
 search:
   type: randomized
-  n_iter: 40
+  n_iter: 2
   scoring: f1
   n_jobs: -1
   verbose: 1

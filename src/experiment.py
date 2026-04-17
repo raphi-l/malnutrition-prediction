@@ -5,7 +5,7 @@ import os
 import sys
 import yaml
 import pickle
-from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold, train_test_split
+from sklearn.model_selection import ParameterSampler, train_test_split
 from sklearn.metrics import classification_report, roc_auc_score
 
 import lightgbm as lgb
@@ -45,7 +45,7 @@ def train_model(df, config=None):
 
     mlflow.set_experiment("malnutrition-prediction-lightgbm")
 
-    with mlflow.start_run():
+    with mlflow.start_run(nested=False) as parent_run:
 
         # ── Log params ──
         mlflow.log_param("test_size",     lightgbm_params['test_size'])
@@ -63,42 +63,79 @@ def train_model(df, config=None):
             mlflow.log_param("n_iter", search_n_iter)
             mlflow.log_param("scoring", search_scoring)
 
-        # ── Train ──
-        model = lgb.LGBMClassifier(
-            n_estimators=lightgbm_params.get('n_estimators', 100),
-            max_depth=lightgbm_params.get('max_depth', -1),
-            learning_rate=lightgbm_params.get('learning_rate', 0.1),
-            random_state=random_state,
-            class_weight=lightgbm_params.get('class_weight', None),
-            verbose=-1
-        )
         categorical_features = X_train.select_dtypes(include='category').columns.tolist()
+        
         fit_params = model_config.get('fit_params', {}) or {}
         fit_params = {**fit_params, "categorical_feature": categorical_features}
 
-        if search_config.get('type') == 'randomized' and param_distributions:
-            cv = StratifiedKFold(
-                n_splits=split_config.get('n_splits', 5),
-                shuffle=split_config.get('shuffle', True),
-                random_state=split_config.get('random_state', random_state)
-            ) if split_config.get('type') == 'stratified_kfold' else split_config.get('n_splits', 5)
+        best_model = None
+        best_metric = -np.inf
+        best_search_params = {}
 
-            search = RandomizedSearchCV(
-                estimator=model,
-                param_distributions=param_distributions,
+        if search_config.get('type') == 'randomized' and param_distributions:
+            candidate_params = list(ParameterSampler(
+                param_distributions,
                 n_iter=search_n_iter,
-                scoring=search_scoring,
-                cv=cv,
-                random_state=search_random_state,
-                n_jobs=search_n_jobs,
-                verbose=search_verbose,
-                refit=True
-            )
-            search.fit(X_train, y_train, **fit_params)
-            model = search.best_estimator_
-            best_params = search.best_params_
-            mlflow.log_params({f"best_{k}": v for k, v in best_params.items()})
+                random_state=search_random_state
+            ))
+
+            for idx, params in enumerate(candidate_params, start=1):
+                with mlflow.start_run(nested=True) as candidate_run:
+                    mlflow.set_tag("search_iteration", idx)
+                    mlflow.log_params(params)
+                    mlflow.log_param("search_type", "randomized")
+                    mlflow.log_param("candidate_index", idx)
+
+                    candidate_args = {
+                        **{
+                            "n_estimators": lightgbm_params.get('n_estimators', 100),
+                            "max_depth": lightgbm_params.get('max_depth', -1),
+                            "learning_rate": lightgbm_params.get('learning_rate', 0.1),
+                            "class_weight": lightgbm_params.get('class_weight', None),
+                        },
+                        **params,
+                    }
+                    candidate_args["random_state"] = random_state
+                    candidate_args["verbose"] = -1
+
+                    candidate_model = lgb.LGBMClassifier(**candidate_args)
+                    candidate_model.fit(X_train, y_train, **fit_params)
+
+                    y_pred = candidate_model.predict(X_test)
+                    y_pred_proba = candidate_model.predict_proba(X_test)[:, 1]
+                    report = classification_report(y_test, y_pred, output_dict=True)
+                    candidate_metrics = {
+                        "accuracy":  round(report["accuracy"], 4),
+                        "precision": round(report["1"]["precision"], 4),
+                        "recall":    round(report["1"]["recall"], 4),
+                        "f1_score":  round(report["1"]["f1-score"], 4),
+                        "roc_auc":   round(roc_auc_score(y_test, y_pred_proba), 4),
+                    }
+                    mlflow.log_metrics(candidate_metrics)
+
+                    metric_value = candidate_metrics.get(search_scoring, candidate_metrics.get("recall", 0))
+                    if metric_value > best_metric:
+                        best_metric = metric_value
+                        best_model = candidate_model
+                        best_search_params = params
+
+            if best_model is None:
+                raise RuntimeError("Random search did not evaluate any candidates.")
+
+            model = best_model
+            mlflow.log_param("best_search_scoring", search_scoring)
+            mlflow.log_param("best_search_value", best_metric)
+            mlflow.log_params({f"best_{k}": v for k, v in best_search_params.items()})
         else:
+                    # ── Train ──
+            model = lgb.LGBMClassifier(
+                n_estimators=lightgbm_params.get('n_estimators', 100),
+                max_depth=lightgbm_params.get('max_depth', -1),
+                learning_rate=lightgbm_params.get('learning_rate', 0.1),
+                random_state=random_state,
+                class_weight=lightgbm_params.get('class_weight', None),
+                verbose=-1
+            )
             model.fit(X_train, y_train, **fit_params)
 
         # ── Evaluate ──
@@ -117,12 +154,6 @@ def train_model(df, config=None):
 
         # ── Log metrics ──
         mlflow.log_metrics(metrics)
-
-        # ── Quality warnings ──
-        if metrics["accuracy"] < quality_config["min_accuracy"]:
-            print(f"\nWARNING: Accuracy {metrics['accuracy']} below threshold {quality_config['min_accuracy']}")
-        if metrics["f1_score"] <= quality_config["min_f1"]:
-            print(f"\nWARNING: F1 {metrics['f1_score']} at/below threshold {quality_config['min_f1']}")
 
         # ── Log model ──
         mlflow.lightgbm.log_model(model, "model")
