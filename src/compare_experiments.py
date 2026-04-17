@@ -32,10 +32,10 @@ if __name__ == "__main__":
             "Check that the experiment has completed MLflow runs."
         )
 
-    # Sort by recall descending (prioritizing disease detection)
-    runs = runs.sort_values('metrics.recall', ascending=False)
+    # Sort by F1 score descending (balancing precision and recall)
+    runs = runs.sort_values('metrics.f1_score', ascending=False)
 
-    print("Top 5 Runs by Recall Score:")
+    print("Top 5 Runs by F1 Score:")
     print("=" * 80)
     for i, row in runs.head(5).iterrows():
         print(f"\nRun: {row['run_id'][:8]}...")
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     best_run = runs.iloc[0]
     print(f"\n{'=' * 80}")
-    print("BEST MODEL (by Recall)")
+    print("BEST MODEL (by F1)")
     print(f"{'=' * 80}")
     print(f"Run ID:     {best_run['run_id']}")
     recall = best_run.get('metrics.recall', 'N/A')
@@ -73,12 +73,46 @@ if __name__ == "__main__":
     print(f"Accuracy:   {accuracy if isinstance(accuracy, str) else f'{accuracy:.4f}'}")
     print(f"AUC-ROC:    {auc_roc if isinstance(auc_roc, str) else f'{auc_roc:.4f}'}")
 
-    # Export best hyperparameters to YAML for training
-    best_params = {k.replace('params.', ''): v for k, v in best_run.items() if k.startswith('params.') and pd.notna(v)}
+    def normalize_value(value):
+        if isinstance(value, str):
+            if value.lower() == "none":
+                return None
+            try:
+                if value.isdigit() or (value.startswith("-") and value[1:].isdigit()):
+                    return int(value)
+                return float(value)
+            except ValueError:
+                return value
+        return value
+
+    VALID_LGB_PARAMS = {
+        "n_estimators",
+        "max_depth",
+        "learning_rate",
+        "class_weight",
+        "num_leaves",
+        "min_child_samples",
+        "subsample",
+        "colsample_bytree",
+        "reg_alpha",
+        "reg_lambda",
+        "scale_pos_weight",
+        "random_state",
+    }
+
+    # Export best LightGBM hyperparameters only
+    best_params = {
+        key.replace('params.', ''): normalize_value(value)
+        for key, value in best_run.items()
+        if key.startswith('params.')
+        and pd.notna(value)
+        and key.replace('params.', '') in VALID_LGB_PARAMS
+    }
+
     if best_params:
         with open("configs/best_model_params.yaml", "w") as f:
             yaml.dump(best_params, f, default_flow_style=False)
-        print(f"\nBest hyperparameters exported to configs/best_model_params.yaml")
+        print(f"\nBest LightGBM hyperparameters exported to configs/best_model_params.yaml")
     else:
-        print("\nNo hyperparameters found to export.")
+        print("\nNo valid LightGBM hyperparameters found to export.")
 
