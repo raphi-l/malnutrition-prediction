@@ -49,12 +49,12 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.13"
 
       - name: Cache pip packages
         uses: actions/cache@v4
@@ -71,7 +71,7 @@ jobs:
         run: python src/train.py data/processed/train.csv
 
       - name: Evaluate model
-        run: python src/evaluate.py
+        run: python src/evaluation.py
 
       - name: Upload metrics as artifact
         if: always()
