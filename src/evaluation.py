@@ -3,7 +3,8 @@ import numpy as np
 import os
 import sys
 import yaml
-from pprint import pprint
+import json
+
 sys.path.insert(0, "src")
 from train import load_data, train_model
 
@@ -81,6 +82,9 @@ if __name__ == "__main__":
     test_metrics = eval(df, model)
 
     #pprint(test_metrics)
+
+    with open("metrics/results.json", "w") as f:
+        json.dump(test_metrics, f, indent=4)
 
     # Exit with error if thresholds not met
     if test_metrics["accuracy"] < quality_config["min_accuracy"]:
