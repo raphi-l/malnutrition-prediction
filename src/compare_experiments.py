@@ -1,5 +1,7 @@
 import sys
 import mlflow
+import yaml
+import pandas as pd
 
 DEFAULT_EXPERIMENT = "malnutrition-prediction-lightgbm"
 
@@ -17,10 +19,11 @@ if __name__ == "__main__":
     experiment_name = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_EXPERIMENT
     experiment = get_experiment_by_name(experiment_name)
 
+    # Get all finished runs, including nested child runs from search
     runs = mlflow.search_runs(
         experiment_ids=[experiment.experiment_id],
         filter_string="status = 'FINISHED'",
-        order_by=["metrics.recall DESC"]
+        run_view_type=mlflow.entities.ViewType.ALL
     )
 
     if runs.empty:
@@ -29,23 +32,53 @@ if __name__ == "__main__":
             "Check that the experiment has completed MLflow runs."
         )
 
+    # Sort by recall descending (prioritizing disease detection)
+    runs = runs.sort_values('metrics.recall', ascending=False)
+
     print("Top 5 Runs by Recall Score:")
     print("=" * 80)
     for i, row in runs.head(5).iterrows():
         print(f"\nRun: {row['run_id'][:8]}...")
-        print(f"  F1:       {row['metrics.f1_score']:.4f}")
-        print(f"  Accuracy: {row['metrics.accuracy']:.4f}")
-        print(f"  AUC-ROC:  {row['metrics.auc_roc']:.4f}")
+        recall = row.get('metrics.recall', 'N/A')
+        f1 = row.get('metrics.f1_score', 'N/A')
+        accuracy = row.get('metrics.accuracy', 'N/A')
+        auc_roc = row.get('metrics.roc_auc', 'N/A')
+        
+        print(f"  Recall:    {recall if isinstance(recall, str) else f'{recall:.4f}'}")
+        print(f"  F1:        {f1 if isinstance(f1, str) else f'{f1:.4f}'}")
+        print(f"  Accuracy:  {accuracy if isinstance(accuracy, str) else f'{accuracy:.4f}'}")
+        print(f"  AUC-ROC:   {auc_roc if isinstance(auc_roc, str) else f'{auc_roc:.4f}'}")
+        
+        # Display all hyperparameters
+        params = {k.replace('params.', ''): v for k, v in row.items() if k.startswith('params.') and pd.notna(v)}
+        if params:
+            print("  Hyperparams:")
+            for param, value in params.items():
+                print(f"    {param}: {value}")
+        else:
+            print("  Hyperparams: None")
 
     best_run = runs.iloc[0]
     print(f"\n{'=' * 80}")
-    print("BEST MODEL")
+    print("BEST MODEL (by Recall)")
     print(f"{'=' * 80}")
     print(f"Run ID:     {best_run['run_id']}")
-    print(f"F1 Score:   {best_run['metrics.f1_score']:.4f}")
-    print(f"Accuracy:   {best_run['metrics.accuracy']:.4f}")
-    print(f"AUC-ROC:    {best_run['metrics.auc_roc']:.4f}")
+    recall = best_run.get('metrics.recall', 'N/A')
+    f1 = best_run.get('metrics.f1_score', 'N/A')
+    accuracy = best_run.get('metrics.accuracy', 'N/A')
+    auc_roc = best_run.get('metrics.roc_auc', 'N/A')
+    
+    print(f"Recall:     {recall if isinstance(recall, str) else f'{recall:.4f}'}")
+    print(f"F1 Score:   {f1 if isinstance(f1, str) else f'{f1:.4f}'}")
+    print(f"Accuracy:   {accuracy if isinstance(accuracy, str) else f'{accuracy:.4f}'}")
+    print(f"AUC-ROC:    {auc_roc if isinstance(auc_roc, str) else f'{auc_roc:.4f}'}")
 
-    print(f"\n{'=' * 80}")
-    print("Average Recall Score by Model Type:")
-    print("=" * 80)
+    # Export best hyperparameters to YAML for training
+    best_params = {k.replace('params.', ''): v for k, v in best_run.items() if k.startswith('params.') and pd.notna(v)}
+    if best_params:
+        with open("configs/best_model_params.yaml", "w") as f:
+            yaml.dump(best_params, f, default_flow_style=False)
+        print(f"\nBest hyperparameters exported to configs/best_model_params.yaml")
+    else:
+        print("\nNo hyperparameters found to export.")
+

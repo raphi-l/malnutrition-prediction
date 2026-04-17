@@ -22,7 +22,7 @@ target: has_malnutrition
 
 split:
   type: stratified_kfold
-  n_splits: 3
+  n_splits: 4
   shuffle: true
   random_state: 42
 
