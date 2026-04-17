@@ -1,0 +1,23 @@
+artifact_path: /Users/raphaellu/malnutrition-prediction/mlruns/1/models/m-32839dce9c494a959bec22efc37bad23/artifacts
+flavors:
+  lightgbm:
+    code: null
+    data: model.pkl
+    lgb_version: 4.6.0
+    model_class: lightgbm.sklearn.LGBMClassifier
+    serialization_format: cloudpickle
+    skops_trusted_types: null
+  python_function:
+    data: model.pkl
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.lightgbm
+    python_version: 3.12.7
+mlflow_version: 3.10.1
+model_id: m-32839dce9c494a959bec22efc37bad23
+model_size_bytes: 129729
+model_uuid: m-32839dce9c494a959bec22efc37bad23
+prompts: null
+run_id: 449fd1167b104759b78c7a20ef24f2ac
+utc_time_created: '2026-04-17 03:00:37.429303'

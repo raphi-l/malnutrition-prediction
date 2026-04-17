@@ -5,7 +5,7 @@ import os
 import sys
 import yaml
 import pickle
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold, train_test_split
 from sklearn.metrics import classification_report, roc_auc_score
 
 import lightgbm as lgb
@@ -17,15 +17,25 @@ def train_model(df, config=None):
         model_config = yaml.safe_load(f)
 
     lightgbm_params = model_config["lgb.LGBMClassifier"]
+    
     quality_config = model_config["model_quality"]
+    
+    search_config = model_config.get("search", {})
+    
+    split_config = model_config.get("split", {})
+    param_distributions = model_config.get("param_distributions", {})
+    
+    target_column = model_config.get("target", lightgbm_params.get("target", "has_malnutrition"))
+    
+    random_state = lightgbm_params.get("random_state", lightgbm_params.get("random_seed", 42))
 
-    X = df.drop('has_malnutrition', axis=1)
-    y = df['has_malnutrition']
+    X = df.drop(target_column, axis=1)
+    y = df[target_column]
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y,
         test_size=lightgbm_params['test_size'],
-        random_state=lightgbm_params['random_state'],
+        random_state=random_state,
         stratify=y
     )
 
@@ -38,25 +48,58 @@ def train_model(df, config=None):
     with mlflow.start_run():
 
         # ── Log params ──
-        mlflow.log_param("n_estimators",  lightgbm_params['n_estimators'])
-        mlflow.log_param("max_depth",     lightgbm_params['max_depth'])
-        mlflow.log_param("learning_rate", lightgbm_params['learning_rate'])
-        mlflow.log_param("class_weight",  lightgbm_params['class_weight'])
         mlflow.log_param("test_size",     lightgbm_params['test_size'])
-        mlflow.log_param("random_state",  lightgbm_params['random_state'])
+        mlflow.log_param("random_state",  random_state)
         mlflow.log_param("n_features",    X_train.shape[1])
+        mlflow.log_param("search_type",   search_config.get('type', 'none'))
+
+        search_n_iter = search_config.get('n_iter', 30)
+        search_scoring = search_config.get('scoring', 'recall')
+        search_random_state = search_config.get('random_state', random_state)
+        search_n_jobs = search_config.get('n_jobs', -1)
+        search_verbose = search_config.get('verbose', 1)
+
+        if search_config.get('type') == 'randomized':
+            mlflow.log_param("n_iter", search_n_iter)
+            mlflow.log_param("scoring", search_scoring)
 
         # ── Train ──
         model = lgb.LGBMClassifier(
-            n_estimators=lightgbm_params['n_estimators'],
-            max_depth=lightgbm_params['max_depth'],
-            learning_rate=lightgbm_params['learning_rate'],
-            random_state=lightgbm_params['random_state'],
-            class_weight=lightgbm_params['class_weight'],
+            n_estimators=lightgbm_params.get('n_estimators', 100),
+            max_depth=lightgbm_params.get('max_depth', -1),
+            learning_rate=lightgbm_params.get('learning_rate', 0.1),
+            random_state=random_state,
+            class_weight=lightgbm_params.get('class_weight', None),
             verbose=-1
         )
         categorical_features = X_train.select_dtypes(include='category').columns.tolist()
-        model.fit(X_train, y_train, categorical_feature=categorical_features)
+        fit_params = model_config.get('fit_params', {}) or {}
+        fit_params = {**fit_params, "categorical_feature": categorical_features}
+
+        if search_config.get('type') == 'randomized' and param_distributions:
+            cv = StratifiedKFold(
+                n_splits=split_config.get('n_splits', 5),
+                shuffle=split_config.get('shuffle', True),
+                random_state=split_config.get('random_state', random_state)
+            ) if split_config.get('type') == 'stratified_kfold' else split_config.get('n_splits', 5)
+
+            search = RandomizedSearchCV(
+                estimator=model,
+                param_distributions=param_distributions,
+                n_iter=search_n_iter,
+                scoring=search_scoring,
+                cv=cv,
+                random_state=search_random_state,
+                n_jobs=search_n_jobs,
+                verbose=search_verbose,
+                refit=True
+            )
+            search.fit(X_train, y_train, **fit_params)
+            model = search.best_estimator_
+            best_params = search.best_params_
+            mlflow.log_params({f"best_{k}": v for k, v in best_params.items()})
+        else:
+            model.fit(X_train, y_train, **fit_params)
 
         # ── Evaluate ──
         y_pred       = model.predict(X_test)
