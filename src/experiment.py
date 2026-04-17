@@ -105,10 +105,6 @@ def train_model(df, config=None):
         y_pred       = model.predict(X_test)
         y_pred_proba = model.predict_proba(X_test)[:, 1]
 
-        print("\nValidation Set Performance:")
-        print(classification_report(y_test, y_pred))
-        print(f"ROC-AUC: {roc_auc_score(y_test, y_pred_proba):.3f}")
-
         report = classification_report(y_test, y_pred, output_dict=True)
 
         metrics = {
