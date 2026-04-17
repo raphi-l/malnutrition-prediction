@@ -32,11 +32,6 @@ if __name__ == "__main__":
             "Check that the experiment has completed MLflow runs."
         )
 
-    # Filter to only child runs (search candidates) if nested runs exist
-    child_runs = runs[runs['tags.mlflow.parentRunId'].notna()]
-    if not child_runs.empty:
-        runs = child_runs
-
     # Sort by recall descending (prioritizing disease detection)
     runs = runs.sort_values('metrics.recall', ascending=False)
 
@@ -44,10 +39,15 @@ if __name__ == "__main__":
     print("=" * 80)
     for i, row in runs.head(5).iterrows():
         print(f"\nRun: {row['run_id'][:8]}...")
-        print(f"  Recall:    {row['metrics.recall']:.4f}")
-        print(f"  F1:        {row['metrics.f1_score']:.4f}")
-        print(f"  Accuracy:  {row['metrics.accuracy']:.4f}")
-        print(f"  AUC-ROC:   {row['metrics.auc_roc']:.4f}")
+        recall = row.get('metrics.recall', 'N/A')
+        f1 = row.get('metrics.f1_score', 'N/A')
+        accuracy = row.get('metrics.accuracy', 'N/A')
+        auc_roc = row.get('metrics.roc_auc', 'N/A')
+        
+        print(f"  Recall:    {recall if isinstance(recall, str) else f'{recall:.4f}'}")
+        print(f"  F1:        {f1 if isinstance(f1, str) else f'{f1:.4f}'}")
+        print(f"  Accuracy:  {accuracy if isinstance(accuracy, str) else f'{accuracy:.4f}'}")
+        print(f"  AUC-ROC:   {auc_roc if isinstance(auc_roc, str) else f'{auc_roc:.4f}'}")
         
         # Display all hyperparameters
         params = {k.replace('params.', ''): v for k, v in row.items() if k.startswith('params.') and pd.notna(v)}
@@ -63,10 +63,15 @@ if __name__ == "__main__":
     print("BEST MODEL (by Recall)")
     print(f"{'=' * 80}")
     print(f"Run ID:     {best_run['run_id']}")
-    print(f"Recall:     {best_run['metrics.recall']:.4f}")
-    print(f"F1 Score:   {best_run['metrics.f1_score']:.4f}")
-    print(f"Accuracy:   {best_run['metrics.accuracy']:.4f}")
-    print(f"AUC-ROC:    {best_run['metrics.auc_roc']:.4f}")
+    recall = best_run.get('metrics.recall', 'N/A')
+    f1 = best_run.get('metrics.f1_score', 'N/A')
+    accuracy = best_run.get('metrics.accuracy', 'N/A')
+    auc_roc = best_run.get('metrics.roc_auc', 'N/A')
+    
+    print(f"Recall:     {recall if isinstance(recall, str) else f'{recall:.4f}'}")
+    print(f"F1 Score:   {f1 if isinstance(f1, str) else f'{f1:.4f}'}")
+    print(f"Accuracy:   {accuracy if isinstance(accuracy, str) else f'{accuracy:.4f}'}")
+    print(f"AUC-ROC:    {auc_roc if isinstance(auc_roc, str) else f'{auc_roc:.4f}'}")
 
     # Export best hyperparameters to YAML for training
     best_params = {k.replace('params.', ''): v for k, v in best_run.items() if k.startswith('params.') and pd.notna(v)}
