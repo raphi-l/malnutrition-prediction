@@ -96,6 +96,6 @@ if __name__ == "__main__":
         data_path = 'https://raw.githubusercontent.com/raphi-l/my-portfolio/refs/heads/main/datasets/mal_nut_train_sample.csv'
     
     df = load_data(data_path)  
-    model = train_model(df)
+    model, metrics = train_model(df)
     save_model(model)
 
