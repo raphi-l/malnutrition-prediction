@@ -1,0 +1,25 @@
+import pytest
+import pandas as pd
+import numpy as np
+import os
+import sys
+
+sys.path.insert(0, "src")
+from train import load_data, train_model
+
+@pytest.fixture
+def train_data_df():
+    local_path = "data/processed/test_mini.csv"
+    fallback_url = 'https://raw.githubusercontent.com/raphi-l/my-portfolio/refs/heads/main/datasets/mal_nut_synth_drift.csv'
+
+    if os.path.exists(local_path):
+        return load_data(local_path)
+    
+    return load_data(fallback_url)
+
+def test_model_prediction_format(train_data_df):
+    
+    model, metrics = train_model(train_data_df)
+
+    assert metrics["accuracy"] >= 0.4, f"[INFO] Model accuracy <40%, fails sanity check"
+    assert metrics["recall"] >= 0.40, f"[INFO] Model recall <40%, fails sanity check"

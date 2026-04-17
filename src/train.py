@@ -75,28 +75,16 @@ def train_model(df, config=None):
         "f1_score":  round(report["1"]["f1-score"], 4),
         "roc_auc":   round(roc_auc_score(y_test, y_pred_proba), 4),
     }
+    
+    return model, metrics
 
-    # Check thresholds
-    if metrics["accuracy"] < quality_config["min_accuracy"]:
-        print(f"\nWARNING: Accuracy {metrics['accuracy']} is below threshold {quality_config['min_accuracy']}")
-    if metrics["f1_score"] <= quality_config["min_f1"]:
-        print(f"\nWARNING: F1 {metrics['f1_score']} is at/below threshold {quality_config['min_f1']}")
-
+def save_model(model):
     # Save model
     os.makedirs("models", exist_ok=True)
     model_path = "models/model.pkl"
     with open(model_path, "wb") as f:
         pickle.dump(model, f)
     print(f"\nModel saved to {model_path}")
-
-    # Save metrics
-    os.makedirs("metrics", exist_ok=True)
-    metrics_path = "metrics/results.json"
-    with open(metrics_path, "w") as f:
-        json.dump(metrics, f, indent=2)
-    print(f"Metrics saved to {metrics_path}")
-
-    return metrics
 
 if __name__ == "__main__":
     
@@ -108,20 +96,6 @@ if __name__ == "__main__":
         data_path = 'https://raw.githubusercontent.com/raphi-l/my-portfolio/refs/heads/main/datasets/mal_nut_train_sample.csv'
     
     df = load_data(data_path)  
-    metrics = train_model(df)
-
-    with open("configs/model_params.yaml") as f:
-        model_config = yaml.safe_load(f)
-
-    quality_config = model_config["model_quality"]
-
-    # Exit with error if thresholds not met
-    if metrics["accuracy"] < quality_config["min_accuracy"]:
-        print(f"\nFAILED: Accuracy below threshold")
-        sys.exit(1)
-    if metrics["f1_score"] < quality_config["min_f1"]:
-        print(f"\nFAILED: F1 score below threshold")
-        sys.exit(1)
-
-    print("\nAll thresholds passed!")
+    model, metrics = train_model(df)
+    save_model(model)
 
